@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <script src="main.js"></script>
+    <style type="text/css">
+      body, svg {
+        padding: 0px;
+        margin: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <svg id="board" style="background: black; width: 100%; height: 100%;">
+      <g id="stars"></g>
+      <g id="space">
+        <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+
+        <g id="123456789" transform="translate(100,100)">
+          <rect width="70" height="70" style="fill: blue; stroke-width:3; stroke: black" />
+        </g>
+
+        <g id="player">
+          <!-- <g id="backwards_c" transform="translate(4,.8) scale(1) rotate(180)"> -->
+          <g transform="translate(-12, -25)">
+  <polygon points="10,20 55,22 65,25 55,28 10,30 0,29 0,21" style="fill: rgb(0,240,0); stroke: green; stroke-width:1" />
+
+  <polygon transform="translate(2, 0)" points="5,0 10,0 10,4 14,4 14,7 10,7 10,20 0,21" style="fill: rgb(0,200,0); stroke: green; stroke-width:1" />
+
+  <polygon transform="translate(2, 0)" points="10,30 10,43 14,43 14,46 10,46 10,50 5,50 0,29" style="fill: rgb(0,200,0); stroke: green; stroke-width:1" />
+          </g>
+
+        </g>
+      </g>
+    </svg>
+    <div id="hud" style="position: absolute; top: 10px; left: 0px; right: 0px; margin: auto; width: 100px; text-align: center; color: white;">
+      <div id="speedometer" style="white-space: nowrap"></div>
+    </div>
+  </body>
+</html>

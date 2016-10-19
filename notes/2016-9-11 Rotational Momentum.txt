@@ -1,0 +1,11 @@
+I've decided not to add rotational momentum to ships for two reasons.
+  1. Hard to control.
+  2. Going to make it harder to make an AI.
+  
+I tried two "modes" of angular momentum.
+
+First, I tried angular moment on rotation with friction -- you let go of the left control and the ship keeps going left but slowly slides to a stop. I like it, but not enough to try to make the turn_around function work with it. Although, it might give me a taste of AI.
+
+Secondly, I tried angular moment on rotation without friction. It feels cool for the first five minutes, but man is it hard to control. I don't really want people wrestling with the controls. And making AI understand it is probably going to be increbily hard.
+
+I like the idea of it, but meh. It's... more work than it's worth at this point. (Although, it'll probably be even more work if I decide I want it later. Oh well.)

@@ -1,0 +1,381 @@
+<html>
+    <head>
+        <script>
+            window.addEventListener("load", function load_planetizer() {
+                window.removeEventListener("load", load_planetizer, false);
+                planetizer.initialize();
+            },false);
+
+            var planetizer = {
+                initialize: function() {
+                    document.addEventListener("mousemove", planetizer.getCoords, false);
+                    document.addEventListener("mousedown", planetizer.getMouseDown, false);
+
+                    planetizer.center = { 
+                        x: (document.getElementById("svg").offsetWidth/2) - 2,
+                        y: (document.getElementById("svg").offsetHeight/2) - 2
+                    }
+
+                    planetizer.planetRadius = 200;
+
+                    document.getElementById("planet").setAttribute("r",planetizer.planetRadius);
+                    document.getElementById("planet_shadow").setAttribute("r",planetizer.planetRadius + 1);
+                    document.getElementById("planet_rounding").setAttribute("r", planetizer.planetRadius + 1);
+                },
+
+                getCoords: function(event) {
+
+                    var element = event.target;
+
+                    while (element.tagName.toLowerCase() != "svg" && element.tagName.toLowerCase() != "html") {
+                        element = element.parentElement;   
+                    }
+
+                    if (element.tagName == "svg") {
+
+                        var line = planetizer.returnLine(planetizer.planetRadius, (event.clientX - element.offsetLeft), (event.clientY - element.offsetTop), planetizer.center.x, planetizer.center.y);
+
+                        var tangent = planetizer.returnTangent(30, line.slope, line.x, line.y)
+
+                        document.getElementById("line").setAttribute("d", "M" + planetizer.center.x + "," + planetizer.center.y + " L" + line.x + "," + line.y);
+                        document.getElementById("tangent").setAttribute("d", "M" + tangent.x1 + "," + tangent.y1 + " L" + tangent.x2 + "," + tangent.y2);
+
+                        document.getElementById("test").innerHTML = line.x + "px, " + line.y + "px";
+                    }
+                },
+                returnLine: function(hypotenuse, pointY, pointX, startY, startX) {
+
+                    if (!startY) var startY = 0;
+                    if (!startX) var startX = 0;
+
+                    var slope = Math.atan2((pointY - startY),(pointX - startX));
+
+                    var adjacent = Math.round(hypotenuse * -Math.sin(slope));
+                    var opposite = Math.round(hypotenuse * -Math.cos(slope));
+
+                    return {x: (startX - adjacent), y: (startY - opposite), slope: ((pointY - startY) / (pointX - startX))}
+
+                },
+                returnTangent: function(hypotenuse, slope, startX, startY) {
+
+                    if (!startY) var startY = 0;
+                    if (!startX) var startX = 0;
+
+                    slope = -(Math.atan(1 / (slope)));
+
+                    return {
+                        x1: (startX - Math.round(-hypotenuse * Math.sin(slope))), y1: (startY - Math.round(-hypotenuse * Math.cos(slope))),
+                        x2: (startX - Math.round(hypotenuse * Math.sin(slope))), y2: (startY - Math.round(hypotenuse * Math.cos(slope))),
+                    }
+
+                },
+
+                dTrue: null,
+
+                getMouseDown: function(event) {
+                    if (event.target.id && (event.target.id.match(/CxCy/) || event.target.id.match(/FxFy/))) {
+                        planetizer.shiftGradient(event);
+                    } 
+
+                    else if (event.target.id && (event.target.id == "shadowResizer" || event.target.id == "roundingResizer")) {
+                        planetizer.resizeGradient(event);
+                    }
+
+                    else if (event.target.id && event.target.id == "planetResizer") {
+                        planetizer.resizePlanet(event);
+                    }
+
+                    else {
+                        var element = event.target;
+
+                        while (element.tagName.toLowerCase() != "svg" && element.tagName.toLowerCase() != "html") {
+                            element = element.parentElement;   
+                        }
+
+                        if (element.tagName == "svg") {
+                            planetizer.makeShape(event,element);
+                        }
+                    }
+                },
+
+                makeShape: function(event,element) {
+                    if (planetizer.dTrue == null) {
+
+                        planetizer.point1 = planetizer.returnLine(planetizer.planetRadius, (event.clientX - element.offsetLeft), (event.clientY - element.offsetTop), planetizer.center.x, planetizer.center.y);
+
+                        planetizer.dTrue = true;
+
+                    } else {
+                        planetizer.point2 = planetizer.returnLine(planetizer.planetRadius, (event.clientX - element.offsetLeft), (event.clientY - element.offsetTop), planetizer.center.x, planetizer.center.y);
+
+                        planetizer.drawShape();
+
+                        planetizer.dTrue = null;
+                    }
+                },
+                drawShape: function() {
+
+                    planetizer.d1 = "M" + planetizer.point1.x + "," + planetizer.point1.y;
+
+                    planetizer.d2 = 
+                        " A" + planetizer.planetRadius + " " + planetizer.planetRadius + " " + 0 + " " +
+                        planetizer.d2_options.sweep + " " + planetizer.d2_options.arc + " " + 
+                        planetizer.point2.x + "," + planetizer.point2.y;
+
+                    planetizer.d = planetizer.d1 + planetizer.d2;
+
+                    document.getElementById("shape").setAttribute("d",planetizer.d);
+
+                    document.getElementById("d").innerHTML = planetizer.d1 +  planetizer.d2;
+                },
+                d2_options: {
+                    sweep: 0,
+                    arc: 0,
+                },
+                set_options: function(element) {
+                    var sweepOrArc;
+
+                    if (element.match(/sweep/)) sweepOrArc = "sweep";
+                    else if (element.match(/arc/)) sweepOrArc = "arc";
+
+                    planetizer.d2_options[sweepOrArc] = (planetizer.d2_options[sweepOrArc] == 0) ? 1 : 0;
+                },
+
+                mouse: {
+                    top: 0,
+                    left: 0
+                },
+                button: {
+                    element: null,
+                    top: 0,
+                    left: 0
+                },
+
+                shiftGradient: function(event) {
+                    if (event.type == "mousedown") {
+                        document.addEventListener("mousemove", planetizer.shiftGradient, false);
+                        document.addEventListener("mouseup", planetizer.shiftGradient, false);
+
+                        planetizer.button.element = event.target;
+
+                        planetizer.mouse.top = event.clientY;
+                        planetizer.mouse.left = event.clientX;
+
+                        planetizer.button.top = event.target.offsetTop;
+                        planetizer.button.left = event.target.offsetLeft;
+                    }
+
+                    else if (event.type == "mousemove") {
+                        var button = planetizer.button.element;
+                        var square = button.parentElement;
+
+                        button.style.left = planetizer.button.left - (planetizer.mouse.left - event.clientX) + "px";
+                        button.style.top = planetizer.button.top - (planetizer.mouse.top - event.clientY) + "px";
+
+                        if (button.offsetLeft < 0) {
+                            button.style.left = "0px";   
+                        } else if (button.offsetLeft + button.offsetWidth > square.offsetWidth) {
+                            button.style.left = square.offsetWidth - button.offsetWidth + "px";
+                        }
+
+                        if (button.offsetTop < 0) {
+                            button.style.top = "0px";   
+                        } else if (button.offsetTop + button.offsetHeight > square.offsetHeight) {
+                            button.style.top = square.offsetHeight - button.offsetHeight + "px";
+                        }
+
+                        var buttonX = parseInt((button.offsetLeft / (square.offsetWidth - button.offsetWidth)) * 100,10) / 100;
+                        var buttonY = parseInt((button.offsetTop / (square.offsetHeight - button.offsetHeight)) * 100,10) / 100;
+
+                        var gradient, XY;
+
+                        if (planetizer.button.element.id.match(/shadow/)) gradient = "shadow";
+                        else if (planetizer.button.element.id.match(/rounding/)) gradient = "rounding";
+
+                        if (planetizer.button.element.id.match(/CxCy/)) XY = "CxCy";
+                        else if (planetizer.button.element.id.match(/FxFy/)) XY = "FxFy";
+                         
+                        document.getElementById("gradient_" + gradient).setAttribute(((XY == "CxCy") ? "cx" : "fx"),buttonX);
+                        document.getElementById("gradient_" + gradient).setAttribute(((XY == "CxCy") ? "cy" : "fy"),buttonY);
+
+                        document.getElementById(gradient + XY + "_info").innerHTML= "cx=\"" + buttonX + "\" cy=\"" + buttonY + "\"";
+                    }
+
+                    else if (event.type == "mouseup") {
+                        document.removeEventListener("mousemove", planetizer.shiftGradient, false);
+                        document.removeEventListener("mouseup", planetizer.shiftGradient, false);
+                    }
+                },
+                resizeGradient: function(event) {
+                    if (event.type == "mousedown") {
+                        document.addEventListener("mousemove", planetizer.resizeGradient, false);
+                        document.addEventListener("mouseup", planetizer.resizeGradient, false);
+                    }
+
+                    else if (event.type == "mousemove") {
+
+                        if (event.target.id == "shadowResizer") {
+                            var gradientRadius = (parseInt(document.getElementById("shadowResizer").value,10)) / 100;
+
+                            document.getElementById("gradient_shadow").setAttribute("r", gradientRadius);
+                            document.getElementById("shadowSize_info").innerHTML = "Radius: " + gradientRadius;
+                        }
+
+                        else if (event.target.id == "roundingResizer") {
+                            var gradientRadius = (parseInt(document.getElementById("roundingResizer").value,10)) / 100;
+
+                            document.getElementById("gradient_rounding").setAttribute("r", gradientRadius);
+                            document.getElementById("roundingSize_info").innerHTML = "Radius: " + gradientRadius;
+                        }
+                    }
+
+                    else if (event.type == "mouseup") {
+                        document.removeEventListener("mousemove", planetizer.resizeGradient, false);
+                        document.removeEventListener("mouseup", planetizer.resizeGradient, false);
+                    }
+                },
+
+                resizePlanet: function(event) {
+                    if (event.type == "mousedown") {
+                        document.addEventListener("mousemove", planetizer.resizePlanet, false);
+                        document.addEventListener("mouseup", planetizer.resizePlanet, false);
+                    }
+
+                    else if (event.type == "mousemove") {
+                        planetizer.planetRadius = parseInt(document.getElementById("planetResizer").value,10);
+
+                        document.getElementById("planet").setAttribute("r", planetizer.planetRadius);
+                        document.getElementById("planet_shadow").setAttribute("r", planetizer.planetRadius + 1);
+                        document.getElementById("planet_rounding").setAttribute("r", planetizer.planetRadius + 1);
+
+                        document.getElementById("planetSize_info").innerHTML = "Radius: " + planetizer.planetRadius + "px";
+                    }
+
+                    else if (event.type == "mouseup") {
+                        document.removeEventListener("mousemove", planetizer.resizePlanet, false);
+                        document.removeEventListener("mouseup", planetizer.resizePlanet, false);
+                    }
+                }
+            }
+        </script>
+
+        <style>
+            html {
+
+                color: white;
+            }
+
+            hr {
+                border-top-color: gray;
+                border-bottom-color: darkgray;
+
+                border-right-width: 0px;
+                border-left-width: 0px;
+            }
+
+            #d2_sweep, #d2_arc, #d3_sweep, #d3_arc {
+                font-weight: bold;
+
+                cursor: pointer;
+            }
+
+            #svg {
+                position: absolute; display: block; 
+
+                top: 0px; 
+                bottom: 0px; 
+                left: 0px; 
+                right: 0px;
+
+                margin: auto; 
+
+                border: 2px dashed gray;
+            }
+
+            #tools {
+                position: absolute; top: 100px; left: 10px; width: 140px;
+
+                background: gray;
+
+                padding: 5px;
+
+                border-radius: 3px;
+            }
+
+            .slider {
+                width: 100%;    
+            }
+
+        </style>
+    </head>
+    <body style="margin: 0px; background: black;">
+        <svg id="svg" width="1024" height="1024">
+            <defs>
+                <radialGradient id="gradient_shadow"
+                                cx="0.6" cy="0.5" r=".9" fx="0.8" fy="0.2"
+                                spreadMethod="pad">
+                    <stop offset="50%" stop-color="rgb(0, 137, 255)" stop-opacity="0"/>
+                    <stop offset="65%" stop-color="black"/>
+                </radialGradient>
+                <radialGradient id="gradient_rounding"
+                                cx="0.5" cy="0.5" r=".85" fx="0.5" fy="0.5"
+                                spreadMethod="pad">
+                    <stop offset="50%" stop-color="rgb(0, 137, 255)" stop-opacity="0"/>
+                    <stop offset="65%" stop-color="black"/>
+                </radialGradient>
+            </defs>
+
+            <circle id="planet" cx="512" cy="512" fill="rgb(0, 137, 255)" />
+            <path id="shape" fill="brown" />
+            <circle id="planet_rounding" cx="512" cy="512" fill="url(#gradient_rounding)" />
+            <circle id="planet_shadow" cx="512" cy="512" fill="url(#gradient_shadow)" />
+
+            <path id="line" stroke-width="2" stroke="blue" />
+            <path id="tangent" stroke-width="2" stroke="red" />
+
+        </svg>
+
+        <div style="position: absolute; top: 10px; left: 10px;">
+            <span id="test"></span>
+            <span id="test2"></span>
+            <br>
+            <br>
+            <span id="d"></span>
+        </div>
+
+        <div id="tools" style="">
+            <div>Planet</div> 
+            <hr>
+            <div id="planetSize_info">Radius: 200px</div> 
+            <input id="planetResizer" type="range" class="slider" min="4" max="448" value="200"><br>
+            <br>
+            <br>
+
+            Shadow Gradient
+            <hr>
+            <div id="shadowSize_info">Radius: 0.9</div>
+            <input id="shadowResizer" type="range" min="0" max="100" value="90" class="slider"><br>
+            <div>Position</div>
+            <div style="position: relative; width: 140px; height: 140px; background: lightgray; border-radius: 3px;">
+                <div id="shadowCxCy" style="position: absolute; width: 1em; height: 1em; border-radius: 10px; background-color: white; border: 2px solid darkgray; color: black; text-align: center; top: 61px; left: 73px;">c</div>
+                <div id="shadowFxFy" style="position: absolute; width: 1em; height: 1em; border-radius: 10px; background-color: white; border: 2px solid darkgray; color: black; text-align: center; top: 25px; left: 96px">f</div>
+            </div>
+            <div id="shadowCxCy_info">cx="0.6" cy="0.5"</div>
+            <div id="shadowFxFy_info">fx="0.8" fy="0.2"</div>
+            <br>
+            <br>
+
+            Rounding Gradient
+            <hr>
+            <div id="roundingSize_info">Radius: 0.85</div>
+            <input id="roundingResizer" type="range" min="0" max="100" value="85" class="slider"><br>
+            <div>Position</div>
+            <div style="position: relative; width: 140px; height: 140px; background: lightgray; border-radius: 3px;">
+                <div id="roundingCxCy" style="position: absolute; width: 1em; height: 1em; border-radius: 10px; background-color: white; border: 2px solid darkgray; color: black; text-align: center; top: 61px; left: 61px;">c</div>
+                <div id="roundingFxFy" style="position: absolute; width: 1em; height: 1em; border-radius: 10px; background-color: white; border: 2px solid darkgray; color: black; text-align: center; top: 61px; left: 61px;">f</div>
+            </div>
+            <div id="roundingCxCy_info">cx="0.5" cy="0.5"</div>
+            <div id="roundingFxFy_info">fx="0.5" fy="0.5"</div>
+        </div>
+    </body>
+</html>

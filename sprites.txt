@@ -1,0 +1,23 @@
+Sprites are inappropriately named in this game. Using that name ‘cause why not.
+
+A ship is a combination of anywhere from one to many SVG elements wrapped in groups. Groups must be offset so that their center is the top-left corner of the group.
+
+group_name: the name of the group. This is usually specified when certain mods are asked for.
+
+group_type: group types determines what the group is used for. Converts to data-group-type on the element if necessary
+
+types are as follows
+- base
+     the core of the ship. only one base can be loaded at a time. if a group_name is asked for that does not match the base, throw a warning, and use the default. if there are multiple base entries that do not have names, throw a warning and use the first 
+
+- engine
+     engine types are used for engine glows. they are only shown when the engines are firing.
+
+- weapon
+     weapon types are used for weapon glows. they only are shown when firing.
+
+- shield
+     shield types are used for shield glows. they are only shown when being shot at AND the ship still has an active shield
+
+- mod
+     mod types are the misc type. They are used for adding additional things to the ship — an external cargo bay or fuel pods or literally anything. They help create a feel of customization to ships. mod types can also be tied to certain functions if necessary

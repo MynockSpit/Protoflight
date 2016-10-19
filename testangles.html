@@ -1,0 +1,153 @@
+<script>
+
+  /*
+sx = x_position_target
+sy = y_position_target
+
+x_position_target^2 + y_position_target^2 // b
+t(2 * x_position_target * x_velocity_target + 2 * y_position_target * y_velocity_target) // c
+t^2(x_velocity_target^2 + y_velocity_target^2 - entity_velocity^2) // a
+
+
+function quad(form) {
+    x1=-b/2/a+Math.pow(Math.pow(b,2)-4*a*c,0.5)/2/a;
+    x2=-b/2/a-Math.pow(Math.pow(b,2)-4*a*c,0.5)/2/a;
+}
+*/
+
+
+  var data1 = [15,15],
+      data2 = [
+        [10,5],
+        [10,15],
+        [20,15],
+        [20,5]
+      ],
+
+      datatt = [
+        [0,7],
+        [0,12],
+        [17,12],
+        [17,7]
+      ], 
+      datattt = [
+        [5,5],
+        [5,15],
+        [15,15],
+        [15,5]
+      ], 
+      datatttt = [
+        [10,5],
+        [10,15],
+        [20,10],
+        [20,0]
+      ];
+
+  window.addEventListener("load", function load_run() {
+    window.removeEventListener("load", load_run, false);
+    run.init();
+  }, false);
+
+  var run = (function() {
+    function init() {
+      var g = document.querySelector("#t");
+      convertToBox(g.getBBox());
+
+      rotate(0); 
+    };
+
+    function renderPoly(data, box) {
+
+      var poly4 = document.querySelector("#ttttt");
+      poly4.setAttribute("points", data.join(" "));
+
+      var array = [
+        [box.left,box.bottom],
+        [box.left,box.top],
+        [box.right,box.top],
+        [box.right,box.bottom]
+      ];
+      
+      
+      var poly4 = document.querySelector("#tttttt");
+      poly4.setAttribute("points", array.join(" "));
+
+    }
+
+    function convertToBox(bbox) {
+
+      var data = [];
+
+      var top = bbox.y,
+          left = bbox.x,
+          bottom = bbox.y + bbox.height,
+          right = bbox.x + bbox.width,
+          centerX = bbox.x + (bbox.width / 2),
+          centerY = bbox.y + (bbox.height / 2);
+
+      data.push([left,bottom]);
+      data.push([left,top]);
+      data.push([right,top]);
+      data.push([right,bottom]);
+
+      data2 = data;
+      data1 = [centerX, centerY];
+
+    }
+
+    function rotate(degrees) {
+
+      var g = document.querySelector("#t");
+      g.setAttribute("transform","rotate(" + degrees + ", 10, 7.5)");
+
+      degrees = (degrees || 0) * Math.PI / 180;
+
+      var box = {
+        left: null,
+        right: null,
+        top: null,
+        bottom: null
+      };
+
+      var temp = data2.map(function(value) {
+
+        var x = value[0],
+            y = value[1],
+            x2 = data1[0] + (x - data1[0]) * Math.cos(degrees) - (y - data1[1]) * Math.sin(degrees),
+            y2 = data1[1] + (x - data1[0]) * Math.sin(degrees) + (y - data1[1]) * Math.cos(degrees);
+
+        if (!box.left || x2 < box.left) box.left = x2;
+        if (!box.right || x2 > box.right) box.right = x2;
+
+        if (!box.top || y2 < box.top) box.top = y2;
+        if (!box.bottom || y2 > box.bottom) box.bottom = y2;
+
+        return [x2,y2];
+
+      });
+      
+      console.log(box);
+
+      renderPoly(temp, box);
+    }
+
+    return {
+      init: init, 
+      rotate: rotate
+    }
+  }());
+
+
+</script>
+
+<svg>
+  <g transform="translate(10,10) scale(3)"><g id="t" >
+    <polygon id="tt" points="0,7 0,12 17,12 17,7"></polygon>
+    <polygon id="ttt" points="5,5 5,15 15,15 15,5"></polygon>
+    <polygon id="tttt" points="10,5 10,15 20,10 20,0"></polygon>
+    </g>
+
+    <polygon id="ttttt" style="fill: none; stroke: red; stroke-width: 1px"></polygon>
+    <polygon id="tttttt" style="fill: none; stroke: red; stroke-width: 1px"></polygon>
+  </g>
+</svg>
